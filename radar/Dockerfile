@@ -8,6 +8,6 @@ COPY app ./app
 ENV DATA_DIR=/data
 ENV PYTHONUNBUFFERED=1
 VOLUME /data
-EXPOSE 8080
+EXPOSE 8787
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8787"]

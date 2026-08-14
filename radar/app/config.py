@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     dispatch_webhook_url: str = ""
     dispatch_token: str = ""
     host: str = "0.0.0.0"
-    port: int = 8080
+    port: int = 8787
     embed_worker: bool = False
     user_agent: str = "FrontierRadar/0.1 (+https://github.com/tomcat333/free)"
 

@@ -13,11 +13,13 @@
 
 ## 本地看一眼
 
+默认端口是 **8787**（避开常见的 8080）。
+
 ```bash
 cd radar
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-PYTHONPATH=. uvicorn app.main:app --port 8080
+PYTHONPATH=. uvicorn app.main:app --port 8787
 ```
 
 另开一个终端：
@@ -27,7 +29,7 @@ cd radar && source .venv/bin/activate
 PYTHONPATH=. python -m app.worker
 ```
 
-打开 http://127.0.0.1:8080
+打开 http://127.0.0.1:8787
 
 ## 一台机器上一直跑（推荐）
 
@@ -39,7 +41,7 @@ cp .env.example .env   # 按需填密钥
 docker compose up -d --build
 ```
 
-- `web`：简报页面，端口 8080
+- `web`：简报页面，端口 **8787**
 - `worker`：按 `COLLECT_INTERVAL_SECONDS`（默认 15 分钟）扫一轮，崩溃会自动重启
 
 只要这台 VPS 不关机，采集就不会停。数据在 Docker volume `radar-data` 里。
@@ -48,7 +50,7 @@ docker compose up -d --build
 
 ```bash
 docker build -t frontier-radar .
-docker run -d --restart unless-stopped -p 8080:8080 \
+docker run -d --restart unless-stopped -p 8787:8787 \
   -e EMBED_WORKER=1 -e DATA_DIR=/data \
   -v radar-data:/data frontier-radar
 ```
@@ -61,6 +63,7 @@ docker run -d --restart unless-stopped -p 8080:8080 \
 | `GITHUB_TOKEN` | 提高 GitHub 搜索限额 |
 | `DISPATCH_WEBHOOK_URL` | 点「远程试跑」时把任务包 POST 到你的 GPU 机 / n8n / 自建 agent |
 | `COLLECT_INTERVAL_SECONDS` | 采集间隔，默认 900 |
+| `PORT` | Web 端口，默认 8787 |
 
 不配大模型也能用：采集、打分、简报、来源、任务包都在；深度文案会退回结构化整理。
 

@@ -2,7 +2,7 @@ services:
   web:
     build: .
     ports:
-      - "8080:8080"
+      - "8787:8787"
     environment:
       DATA_DIR: /data
       EMBED_WORKER: "0"
