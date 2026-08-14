@@ -16,7 +16,7 @@
 
     python stack_tiffs.py /path/to/parent_dir -o stack.tif
     python stack_tiffs.py /path/to/parent_dir -o stack.tif --dry-run
-    python stack_tiffs.py /path/to/parent_dir -o stack.tif --sort name
+    python stack_tiffs.py /path/to/parent_dir -o stack.tif --dtype float32
 """
 
 from __future__ import annotations
@@ -30,6 +30,9 @@ import numpy as np
 import tifffile
 
 TIFF_SUFFIXES = {".tif", ".tiff", ".TIF", ".TIFF"}
+# tifffile 的 ImageJ 格式只支持这四种：uint8(B)、uint16(H)、int16(h)、float32(f)
+IMAGEJ_DTYPE_CHARS = set("BHhf")
+IMAGEJ_DTYPE_NAMES = ("uint8", "uint16", "int16", "float32")
 
 
 def natural_key(text: str):
@@ -113,10 +116,41 @@ def validate_layers(layers: list[np.ndarray], source_names: list[str]) -> None:
         )
 
 
+def to_imagej_dtype(stack: np.ndarray, requested: str = "auto") -> np.ndarray:
+    """把像素类型转成 ImageJ 能写进超栈的那几种。
+
+    原始 TIFF 经常是 int32（numpy 记作 'i'），ImageJ 格式不支持，会直接报错。
+    auto：已兼容则保持；整数且落在 0–65535 则用 uint16，否则用 float32。
+    """
+    if requested != "auto":
+        target = np.dtype(requested)
+        if stack.dtype != target:
+            print(f"提示: 按指定将 {stack.dtype} 转为 {target}", file=sys.stderr)
+        return stack.astype(target, copy=False)
+
+    if stack.dtype.char in IMAGEJ_DTYPE_CHARS:
+        return stack
+
+    vmin = stack.min()
+    vmax = stack.max()
+    if np.issubdtype(stack.dtype, np.integer) and vmin >= 0 and vmax <= np.iinfo(np.uint16).max:
+        target = np.dtype(np.uint16)
+    else:
+        target = np.dtype(np.float32)
+
+    print(
+        f"提示: ImageJ 不支持 {stack.dtype}（dtype '{stack.dtype.char}'），"
+        f"已按数值范围 [{vmin}, {vmax}] 转为 {target}",
+        file=sys.stderr,
+    )
+    return stack.astype(target, copy=False)
+
+
 def stack_and_write(
     tiffs: list[Path],
     output: Path,
     dry_run: bool,
+    dtype: str = "auto",
 ) -> None:
     if not tiffs:
         raise FileNotFoundError("没有找到任何 TIFF 文件")
@@ -140,6 +174,7 @@ def stack_and_write(
 
     target_dtype = layers[0].dtype
     stack = np.stack([layer.astype(target_dtype, copy=False) for layer in layers], axis=0)
+    stack = to_imagej_dtype(stack, requested=dtype)
 
     output.parent.mkdir(parents=True, exist_ok=True)
     # ImageJ 可直接打开的多页 TIFF；体积较大时用 BigTIFF
@@ -185,6 +220,12 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="只列出将要叠入的文件和顺序，不写输出",
     )
+    parser.add_argument(
+        "--dtype",
+        choices=("auto", *IMAGEJ_DTYPE_NAMES),
+        default="auto",
+        help="输出像素类型。auto（默认）会在 ImageJ 不支持原类型时自动转换",
+    )
     return parser.parse_args()
 
 
@@ -194,7 +235,12 @@ def main() -> int:
     if args.sort == "name":
         tiffs = sorted(tiffs, key=lambda p: natural_key(p.name))
     try:
-        stack_and_write(tiffs, args.output.resolve(), dry_run=args.dry_run)
+        stack_and_write(
+            tiffs,
+            args.output.resolve(),
+            dry_run=args.dry_run,
+            dtype=args.dtype,
+        )
     except (FileNotFoundError, ValueError) as exc:
         print(f"错误: {exc}", file=sys.stderr)
         return 1
