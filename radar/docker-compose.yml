@@ -1,0 +1,36 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      DATA_DIR: /data
+      EMBED_WORKER: "0"
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      DISPATCH_WEBHOOK_URL: ${DISPATCH_WEBHOOK_URL:-}
+      DISPATCH_TOKEN: ${DISPATCH_TOKEN:-}
+      COLLECT_INTERVAL_SECONDS: ${COLLECT_INTERVAL_SECONDS:-900}
+    volumes:
+      - radar-data:/data
+    restart: unless-stopped
+
+  worker:
+    build: .
+    command: python -m app.worker
+    environment:
+      DATA_DIR: /data
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      COLLECT_INTERVAL_SECONDS: ${COLLECT_INTERVAL_SECONDS:-900}
+      ENRICH_TOP_N: ${ENRICH_TOP_N:-12}
+    volumes:
+      - radar-data:/data
+    restart: unless-stopped
+
+volumes:
+  radar-data:

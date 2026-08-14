@@ -1,0 +1,79 @@
+# 前沿雷达（Frontier Radar）
+
+持续收集 AI / 算法前沿资讯，自动估重要性，做成可以往下钻的简报。
+
+这不是 RSS 阅读器。RSS 只是来源之一。真正在做的是：
+
+1. **不停采集**：arXiv、GitHub 新仓库、Hugging Face 日报/热门模型、Hacker News、Reddit、实验室博客
+2. **先打分再露面**：来源权重 + 热度 + 关键词 + 时效，分成「重点突破 / 值得看 / 雷达扫描」
+3. **三层阅读**：扫一眼 → 深度介绍 → 全过程讲解
+4. **来源可追溯**，觉得好的条目可以 **生成远程试跑任务包**（克隆命令 + 给编码代理的提示词，也可 POST 到你的机器）
+
+> Cursor 云端会话会在空闲后回收，**不能**当永不关机的主机。把本目录用 Docker 丢到 VPS / 云主机上，`worker` 才会 24/7 跑。
+
+## 本地看一眼
+
+```bash
+cd radar
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+PYTHONPATH=. uvicorn app.main:app --port 8080
+```
+
+另开一个终端：
+
+```bash
+cd radar && source .venv/bin/activate
+PYTHONPATH=. python -m app.worker
+```
+
+打开 http://127.0.0.1:8080
+
+## 一台机器上一直跑（推荐）
+
+在任意 Linux 主机：
+
+```bash
+cd radar
+cp .env.example .env   # 按需填密钥
+docker compose up -d --build
+```
+
+- `web`：简报页面，端口 8080
+- `worker`：按 `COLLECT_INTERVAL_SECONDS`（默认 15 分钟）扫一轮，崩溃会自动重启
+
+只要这台 VPS 不关机，采集就不会停。数据在 Docker volume `radar-data` 里。
+
+单容器也可以（Web 进程里顺带跑采集）：
+
+```bash
+docker build -t frontier-radar .
+docker run -d --restart unless-stopped -p 8080:8080 \
+  -e EMBED_WORKER=1 -e DATA_DIR=/data \
+  -v radar-data:/data frontier-radar
+```
+
+## 选配
+
+| 环境变量 | 作用 |
+| --- | --- |
+| `OPENAI_API_KEY` + `OPENAI_BASE_URL` + `OPENAI_MODEL` | 写深度介绍和全过程。兼容 DeepSeek / 硅基流动 / 智谱等 OpenAI 接口 |
+| `GITHUB_TOKEN` | 提高 GitHub 搜索限额 |
+| `DISPATCH_WEBHOOK_URL` | 点「远程试跑」时把任务包 POST 到你的 GPU 机 / n8n / 自建 agent |
+| `COLLECT_INTERVAL_SECONDS` | 采集间隔，默认 900 |
+
+不配大模型也能用：采集、打分、简报、来源、任务包都在；深度文案会退回结构化整理。
+
+## 阅读层
+
+1. 首页三栏简报，按分数分层
+2. 点进条目看深度介绍
+3. 「生成全过程讲解」：问题背景 → 方法步骤 → 创新点 → 怎么上手
+4. 「生成并派发任务包」：给远程机器跑最小复现
+
+## 测试
+
+```bash
+cd radar
+PYTHONPATH=. pytest -q
+```

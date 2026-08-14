@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}{{ item.title }} · 前沿雷达{% endblock %}
+{% block body %}
+<article class="story">
+  <p class="kicker">{{ item.tier | tier_label }} · {{ item.kind | kind_label }} · {{ item.source }} · {{ '%.0f'|format(item.score) }} 分</p>
+  <h1>{{ item.title }}</h1>
+  <p class="lede">{{ item.brief }}</p>
+  <p class="byline">
+    {% if item.authors %}{{ item.authors }} · {% endif %}
+    {% if item.published_at %}{{ item.published_at.strftime('%Y-%m-%d') }}{% endif %}
+  </p>
+
+  <nav class="toc">
+    <a href="#intro">深度介绍</a>
+    <a href="#deep">全过程</a>
+    <a href="#sources">来源</a>
+    <a href="#run">远程试跑</a>
+  </nav>
+
+  <section id="intro">
+    <h2>深度介绍</h2>
+    <div class="prose">{{ (item.intro or '还没有深度介绍。点下面生成，或等采集轮次精加工。') | replace('\n', '<br>') | safe }}</div>
+  </section>
+
+  <section id="deep">
+    <h2>全过程详解</h2>
+    {% if item.deep_dive %}
+      <div class="prose">{{ item.deep_dive | replace('\n', '<br>') | safe }}</div>
+    {% else %}
+      <p>这一层按需生成，避免每条都烧 token。</p>
+      <form method="post" action="/items/{{ item.id }}/deep-dive">
+        <button type="submit">生成全过程讲解</button>
+      </form>
+    {% endif %}
+  </section>
+
+  <section id="sources">
+    <h2>来源与信号</h2>
+    <ul class="sources">
+      <li><a href="{{ item.url }}" rel="noreferrer">主链接</a></li>
+      {% for src in sources %}
+      <li><a href="{{ src.url }}" rel="noreferrer">{{ src.label }}</a></li>
+      {% endfor %}
+    </ul>
+    <p class="muted">打分依据：{{ item.score_reasons }}</p>
+    {% if extra %}
+    <pre class="extra">{{ extra | tojson(indent=2) }}</pre>
+    {% endif %}
+  </section>
+
+  <section id="run">
+    <h2>远程试跑</h2>
+    <p>会生成一份可发给 GPU 机器 / 编码代理 / Webhook 的任务包：克隆命令、最小复现提示词。配置 <code>DISPATCH_WEBHOOK_URL</code> 后会直接 POST 出去。</p>
+    <form method="post" action="/items/{{ item.id }}/dispatch">
+      <button type="submit">生成并派发任务包</button>
+    </form>
+    {% for d in dispatches %}
+      <div class="dispatch">
+        <p><strong>{{ d.status }}</strong> · {{ d.created_at }}</p>
+        <pre>{{ d.pack_json }}</pre>
+      </div>
+    {% endfor %}
+  </section>
+</article>
+{% endblock %}
