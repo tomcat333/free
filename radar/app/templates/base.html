@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}前沿雷达{% endblock %}</title>
+  <link rel="stylesheet" href="/static/radar.css" />
+</head>
+<body>
+  <header class="mast">
+    <a class="mark" href="/">前沿雷达 <span>FRONTIER</span></a>
+    <form class="search" action="/" method="get">
+      <input type="search" name="q" value="{{ q|default('') }}" placeholder="搜论文、仓库、模型、实验室…" />
+      <button type="submit">检索</button>
+    </form>
+  </header>
+  <main>
+    {% block body %}{% endblock %}
+  </main>
+  <footer class="foot">
+    多源采集 · 自动打分 · 分层简报。本机只是开发沙箱；真正 24/7 请用 Docker 丢到 VPS 上跑 worker。
+  </footer>
+</body>
+</html>

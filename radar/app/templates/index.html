@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}前沿雷达 · 简报{% endblock %}
+{% block body %}
+<section class="status">
+  <div>
+    <p class="kicker">持续扫描中</p>
+    <h1>把最前沿的模型、算法和仓库收成一份能往下钻的简报。</h1>
+  </div>
+  <dl>
+    <div><dt>库存</dt><dd>{{ total }}</dd></div>
+    <div><dt>最近一轮</dt><dd>{% if last_run %}{{ last_run.status }} · +{{ last_run.new_items }}{% else %}尚未采集{% endif %}</dd></div>
+    <div><dt>深度解读</dt><dd>{% if llm_enabled %}大模型已接通{% else %}启发式（可配 API Key）{% endif %}</dd></div>
+    <div><dt>远程试跑</dt><dd>{% if dispatch_ready %}Webhook 已配置{% else %}先生成任务包{% endif %}</dd></div>
+  </dl>
+  <form class="collect" method="post" action="/collect">
+    <button type="submit">立刻扫一轮</button>
+  </form>
+</section>
+
+<nav class="filters">
+  <a href="/" class="{% if not kind %}on{% endif %}">全部</a>
+  <a href="/?kind=paper" class="{% if kind == 'paper' %}on{% endif %}">论文</a>
+  <a href="/?kind=repo" class="{% if kind == 'repo' %}on{% endif %}">GitHub</a>
+  <a href="/?kind=model" class="{% if kind == 'model' %}on{% endif %}">模型</a>
+  <a href="/?kind=news" class="{% if kind == 'news' %}on{% endif %}">实验室</a>
+  <a href="/?kind=discussion" class="{% if kind == 'discussion' %}on{% endif %}">讨论</a>
+</nav>
+
+{% macro cards(list) %}
+  <ul class="cards">
+    {% for item in list %}
+    <li class="card tier-{{ item.tier }}">
+      <a href="/items/{{ item.id }}">
+        <div class="meta">
+          <span class="tier">{{ item.tier | tier_label }}</span>
+          <span>{{ item.kind | kind_label }}</span>
+          <span>{{ item.source }}</span>
+          <span class="score">{{ '%.0f'|format(item.score) }}</span>
+        </div>
+        <h2>{{ item.title }}</h2>
+        <p>{{ item.brief or item.raw_summary[:160] }}</p>
+      </a>
+    </li>
+    {% else %}
+    <li class="empty">这一层暂时是空的。启动 worker 后会开始往里填。</li>
+    {% endfor %}
+  </ul>
+{% endmacro %}
+
+<section class="layer">
+  <h2>扫一眼 · 重点突破</h2>
+  {{ cards(groups.get('breakthrough', [])) }}
+</section>
+<section class="layer">
+  <h2>值得看</h2>
+  {{ cards(groups.get('notable', [])) }}
+</section>
+<section class="layer">
+  <h2>雷达扫描</h2>
+  {{ cards(groups.get('signal', [])) }}
+</section>
+{% endblock %}
