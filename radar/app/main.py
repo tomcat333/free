@@ -80,6 +80,8 @@ def home(
             "q": q or "",
             "last_run": last_run,
             "llm_enabled": settings.llm_enabled,
+            "llm_model": settings.openai_model if settings.llm_enabled else "",
+            "env_file_found": settings.env_file_found,
             "dispatch_ready": bool(settings.dispatch_webhook_url),
             "total": session.query(Item).count(),
         },
@@ -105,6 +107,8 @@ def item_page(request: Request, item_id: int, session: Session = Depends(db_dep)
             "extra": extra,
             "dispatches": dispatches,
             "llm_enabled": settings.llm_enabled,
+            "llm_model": settings.openai_model if settings.llm_enabled else "",
+            "env_file_found": settings.env_file_found,
             "dispatch_ready": bool(settings.dispatch_webhook_url),
         },
     )
@@ -116,6 +120,10 @@ def api_status(session: Session = Depends(db_dep)):
     return {
         "total_items": session.query(Item).count(),
         "llm_enabled": settings.llm_enabled,
+        "llm_model": settings.openai_model if settings.llm_enabled else "",
+        "openai_base_url": settings.openai_base_url if settings.llm_enabled else "",
+        "env_file_found": settings.env_file_found,
+        "enrich_top_n": settings.enrich_top_n,
         "dispatch_ready": bool(settings.dispatch_webhook_url),
         "last_run": None
         if not last_run

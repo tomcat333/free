@@ -9,9 +9,16 @@
   <dl>
     <div><dt>库存</dt><dd>{{ total }}</dd></div>
     <div><dt>最近一轮</dt><dd>{% if last_run %}{{ last_run.status }} · +{{ last_run.new_items }}{% else %}尚未采集{% endif %}</dd></div>
-    <div><dt>深度解读</dt><dd>{% if llm_enabled %}大模型已接通{% else %}启发式（可配 API Key）{% endif %}</dd></div>
+    <div><dt>深度解读</dt><dd>{% if llm_enabled %}已接通 · {{ llm_model }}{% else %}未接通 API Key{% endif %}</dd></div>
     <div><dt>远程试跑</dt><dd>{% if dispatch_ready %}Webhook 已配置{% else %}先生成任务包{% endif %}</dd></div>
   </dl>
+  {% if not llm_enabled %}
+  <p class="muted" style="grid-column:1/-1;margin:0">
+    还没读到可用的 API Key。请确认 <code>radar/.env</code>（不要叫 <code>.env.txt</code>）里有
+    <code>OPENAI_API_KEY=...</code>，保存后先关掉两个黑窗口，再双击 <code>start-all.bat</code>。
+    {% if env_file_found %}当前找到的配置文件：<code>{{ env_file_found }}</code>。{% else %}当前没有找到 .env 文件。{% endif %}
+  </p>
+  {% endif %}
   <form class="collect" method="post" action="/collect">
     <button type="submit">立刻扫一轮</button>
   </form>
