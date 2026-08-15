@@ -4,7 +4,7 @@
 <section class="status">
   <div>
     <p class="kicker">持续扫描中</p>
-    <h1>把最前沿的模型、算法和仓库收成一份能往下钻的简报。</h1>
+    <h1>把最前沿的模型、算法，以及 X 射线表征专业动态，收成一份能往下钻的简报。</h1>
   </div>
   <dl>
     <div><dt>库存</dt><dd>{{ total }}</dd></div>
@@ -25,7 +25,10 @@
 </section>
 
 <nav class="filters">
-  <a href="/" class="{% if not kind %}on{% endif %}">全部</a>
+  <a href="/" class="{% if not kind and not track %}on{% endif %}">全部</a>
+  <a href="/?track=xray" class="{% if track == 'xray' %}on{% endif %}">专业·X射线</a>
+  <a href="/?kind=pro_paper" class="{% if kind == 'pro_paper' %}on{% endif %}">专业论文</a>
+  <a href="/?kind=vendor" class="{% if kind == 'vendor' %}on{% endif %}">厂商动态</a>
   <a href="/?kind=paper" class="{% if kind == 'paper' %}on{% endif %}">论文</a>
   <a href="/?kind=repo" class="{% if kind == 'repo' %}on{% endif %}">GitHub</a>
   <a href="/?kind=model" class="{% if kind == 'model' %}on{% endif %}">模型</a>

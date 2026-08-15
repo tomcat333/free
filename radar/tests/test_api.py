@@ -36,3 +36,32 @@ def test_api_status(client):
     resp = client.get("/api/status")
     assert resp.status_code == 200
     assert resp.json()["total_items"] == 0
+
+
+def test_home_xray_track_filter(client, session):
+    add_item(session, title="AI paper", kind="paper", url="https://example.com/ai", source_id="ai")
+    add_item(
+        session,
+        title="CD-SAXS study",
+        kind="pro_paper",
+        source="arxiv_pro",
+        url="https://example.com/pro",
+        source_id="pro",
+    )
+    add_item(
+        session,
+        title="Rigaku news",
+        kind="vendor",
+        source="vendor",
+        url="https://example.com/vendor",
+        source_id="vendor",
+    )
+    home = client.get("/?track=xray")
+    assert home.status_code == 200
+    assert "专业·X射线" in home.text
+    assert "CD-SAXS study" in home.text
+    assert "Rigaku news" in home.text
+    assert "AI paper" not in home.text
+    vendors = client.get("/?kind=vendor")
+    assert "Rigaku news" in vendors.text
+    assert "CD-SAXS study" not in vendors.text

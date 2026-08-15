@@ -8,11 +8,13 @@ from app.collectors import RawItem
 
 SOURCE_WEIGHT = {
     "arxiv": 48,
+    "arxiv_pro": 54,
     "github": 46,
     "huggingface": 55,
     "hn": 50,
     "blog": 58,
     "reddit": 34,
+    "vendor": 56,
 }
 
 KEYWORD_WEIGHTS = [
@@ -23,6 +25,12 @@ KEYWORD_WEIGHTS = [
     (r"\bbenchmark\b|\bleaderboard\b|\bsurpass|\bbeat gpt|\bbeat claude", 10),
     (r"\brlhf\b|\bgrpo\b|\breinforcement learning\b", 6),
     (r"\bmultimodal\b|\bvideo generation\b|\brobotics\b", 6),
+    # 专业：X 射线表征 / 半导体量测
+    (r"\bcd[- ]?saxs\b|\bcritical[- ]dimension\b.*\bsaxs\b|\bsaxs\b.*\bcritical[- ]dimension\b", 14),
+    (r"\bhrxrd\b|\bhigh[- ]resolution\s+x[- ]?ray\s+diffraction\b|\bgrazing[- ]incidence\b", 12),
+    (r"\bgisaxs\b|\bx[- ]?ray reflectivity\b|\bxrr\b|\breciprocal space\b", 10),
+    (r"\bsemiconductor\b.*\b(metrology|xrd|saxs|xrf|txrf)\b|\b(metrology|xrd|saxs)\b.*\bsemiconductor\b", 10),
+    (r"\brigaku\b|\bkla\b|\b科磊\b|\b理学\b|\bonyx\b|\bxtraia\b", 8),
 ]
 
 

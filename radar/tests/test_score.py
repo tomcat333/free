@@ -61,3 +61,30 @@ def test_github_stars_help():
     low, _, _ = score_item(_raw(source="github", kind="repo", extra={"stars": 3}, title="tiny"))
     high, _, _ = score_item(_raw(source="github", kind="repo", extra={"stars": 4000}, title="tiny"))
     assert high > low
+
+
+def test_pro_xray_keywords_boost():
+    score, reasons, tier = score_item(
+        _raw(
+            source="arxiv_pro",
+            kind="pro_paper",
+            title="CD-SAXS for critical dimension metrology",
+            raw_summary="Semiconductor SAXS and HRXRD process control",
+        )
+    )
+    assert score >= 70
+    assert tier in {"notable", "breakthrough"}
+    assert any("关键词" in r for r in reasons)
+
+
+def test_vendor_source_weight():
+    score, reasons, _tier = score_item(
+        _raw(
+            source="vendor",
+            kind="vendor",
+            title="[理学 Rigaku] ONYX 3200 semiconductor metrology",
+            raw_summary="X-ray inspection platform",
+        )
+    )
+    assert score >= 60
+    assert any("vendor" in r for r in reasons)

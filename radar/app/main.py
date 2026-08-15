@@ -29,10 +29,12 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 templates.env.filters["tier_label"] = lambda v: TIER_LABEL.get(v, v)
 templates.env.filters["kind_label"] = lambda v: {
     "paper": "论文",
+    "pro_paper": "专业论文",
     "repo": "仓库",
     "model": "模型",
     "news": "实验室/博客",
     "discussion": "讨论",
+    "vendor": "厂商动态",
 }.get(v, v)
 
 
@@ -65,11 +67,12 @@ app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 def home(
     request: Request,
     kind: str | None = None,
+    track: str | None = None,
     q: str | None = None,
     session: Session = Depends(db_dep),
 ):
-    items = load_feed(session, kind=kind or None, q=q, limit=80)
-    if not q and not kind:
+    items = load_feed(session, kind=kind or None, track=track or None, q=q, limit=80)
+    if not q and not kind and not track:
         window = recent_window(session, hours=48)
         groups = briefing_groups(window if window else items[:40])
     else:
@@ -82,6 +85,7 @@ def home(
             "items": items,
             "groups": groups,
             "kind": kind or "",
+            "track": track or "",
             "q": q or "",
             "last_run": last_run,
             "llm_enabled": settings.llm_enabled,
@@ -147,11 +151,12 @@ def api_status(session: Session = Depends(db_dep)):
 @app.get("/api/items")
 def api_items(
     kind: str | None = None,
+    track: str | None = None,
     q: str | None = None,
     limit: int = Query(50, le=200),
     session: Session = Depends(db_dep),
 ):
-    items = load_feed(session, kind=kind, q=q, limit=limit)
+    items = load_feed(session, kind=kind, track=track, q=q, limit=limit)
     return [_item_dict(i) for i in items]
 
 

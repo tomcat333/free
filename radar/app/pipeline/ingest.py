@@ -69,4 +69,8 @@ def _tags(raw: RawItem) -> str:
         tags.add(str(extra["pipeline_tag"]))
     if extra.get("lab"):
         tags.add(str(extra["lab"]))
+    if extra.get("vendor"):
+        tags.add(str(extra["vendor"])[:40])
+    if extra.get("track"):
+        tags.add(str(extra["track"])[:40])
     return ",".join(sorted(tags)[:12])

@@ -11,6 +11,7 @@ from app.collectors.blogs import collect_blogs
 from app.collectors.github import collect_github
 from app.collectors.hn import collect_hn
 from app.collectors.huggingface import collect_huggingface
+from app.collectors.pro_xray import collect_arxiv_pro, collect_vendors
 from app.collectors.reddit import collect_reddit
 from app.config import settings
 
@@ -20,11 +21,13 @@ CollectorFn = Callable[[httpx.AsyncClient], Awaitable[list]]
 
 COLLECTORS: dict[str, CollectorFn] = {
     "arxiv": collect_arxiv,
+    "arxiv_pro": collect_arxiv_pro,
     "github": collect_github,
     "hn": collect_hn,
     "huggingface": collect_huggingface,
     "blogs": collect_blogs,
     "reddit": collect_reddit,
+    "vendors": collect_vendors,
 }
 
 
