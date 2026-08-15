@@ -94,6 +94,18 @@ async def enrich_items(session: Session, items: list[Item], deep: bool = False) 
     return done
 
 
+async def ensure_intro(session: Session, item: Item, *, force: bool = False) -> Item:
+    """按需生成一句话简报 + 深度介绍。默认不在采集时自动烧 token。"""
+    has_real_intro = bool(item.intro) and "尚未配置大模型" not in item.intro
+    if has_real_intro and item.brief and not force:
+        return item
+    if force or (item.intro and "尚未配置大模型" in item.intro):
+        item.intro = ""
+    await enrich_items(session, [item], deep=False)
+    session.refresh(item)
+    return item
+
+
 async def ensure_deep_dive(session: Session, item: Item) -> Item:
     if item.deep_dive:
         return item
@@ -151,7 +163,11 @@ def _template_intro(item: Item) -> str:
         bits.append(item.raw_summary[:1200])
     if extra:
         bits.append("采集侧信号：" + ", ".join(f"{k}={v}" for k, v in list(extra.items())[:8]))
-    bits.append("尚未配置大模型，以上为结构化整理。配置 OPENAI_API_KEY 后可自动写深度介绍与全过程。")
+    bits.append(
+        "尚未配置大模型，以上为结构化整理。"
+        "在 .env 里配置 OPENAI_API_KEY（也可用 DeepSeek / 硅基流动 / 智谱等兼容接口），"
+        "再点页面上的「生成深度介绍」；默认不会把扫描到的每条都拿去总结。"
+    )
     return "\n\n".join(bits)
 
 

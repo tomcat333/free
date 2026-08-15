@@ -73,13 +73,15 @@ docker run -d --restart unless-stopped -p 8787:8787 \
 
 | 环境变量 | 作用 |
 | --- | --- |
-| `OPENAI_API_KEY` + `OPENAI_BASE_URL` + `OPENAI_MODEL` | 写深度介绍和全过程。兼容 DeepSeek / 硅基流动 / 智谱等 OpenAI 接口 |
+| `OPENAI_API_KEY` + `OPENAI_BASE_URL` + `OPENAI_MODEL` | 写深度介绍和全过程。变量名带 OPENAI，但可用 DeepSeek / 硅基流动 / 智谱等兼容接口 |
+| `ENRICH_TOP_N` | 每轮自动精加工条数，**默认 0=按需**（只在你点按钮时才调用）。想自动写高分条目可改成 5/12 |
 | `GITHUB_TOKEN` | 提高 GitHub 搜索限额 |
 | `DISPATCH_WEBHOOK_URL` | 点「远程试跑」时把任务包 POST 到你的 GPU 机 / n8n / 自建 agent |
 | `COLLECT_INTERVAL_SECONDS` | 采集间隔，默认 900 |
 | `PORT` | Web 端口，默认 8787 |
 
-不配大模型也能用：采集、打分、简报、来源、任务包都在；深度文案会退回结构化整理。
+不配大模型也能用：采集、打分、列表、来源、任务包都在。  
+配了 Key 之后：**默认不会**把扫描到的每条都拿去总结；点开条目再点「生成深度介绍 / 全过程」才烧 token。
 
 ## 阅读层
 

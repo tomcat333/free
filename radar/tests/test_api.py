@@ -17,6 +17,10 @@ def test_item_layers_and_dispatch(client, session):
     assert "全过程" in page.text
     assert "远程试跑" in page.text
 
+    intro = client.post(f"/api/items/{item.id}/intro")
+    assert intro.status_code == 200
+    assert intro.json()["intro"]
+
     deep = client.post(f"/api/items/{item.id}/deep-dive")
     assert deep.status_code == 200
     assert deep.json()["deep_dive"]

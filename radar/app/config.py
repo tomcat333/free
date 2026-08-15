@@ -12,7 +12,8 @@ class Settings(BaseSettings):
 
     data_dir: Path = Path("./data")
     collect_interval_seconds: int = 900
-    enrich_top_n: int = 12
+    # 0 = 默认不自动写介绍，只在你点按钮时才调用大模型（省 token）
+    enrich_top_n: int = 0
     openai_api_key: str = ""
     openai_base_url: str = "https://api.openai.com/v1"
     openai_model: str = "gpt-4o-mini"
