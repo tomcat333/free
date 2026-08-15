@@ -15,6 +15,20 @@
 
 默认端口是 **8787**（避开常见的 8080）。
 
+### Windows：双击启动（推荐）
+
+在资源管理器中打开本机的 `free\radar` 文件夹：
+
+1. **第一次**：双击 `setup-once.bat`（装依赖，只需一次）
+2. **以后每次**：双击 `start-all.bat`  
+   - 会弹出两个黑窗口（网页 + 采集）  
+   - 并打开浏览器 http://127.0.0.1:8787  
+3. **要停止**：关掉那两个黑窗口，或双击 `stop-all.bat`
+
+也可以单独双击 `start-web.bat` / `start-worker.bat`。
+
+### 命令行方式
+
 ```bash
 cd radar
 python3 -m venv .venv && source .venv/bin/activate
