@@ -62,15 +62,33 @@ http://100.x.y.z:8787
 - 在 Surface 上不要用 `http://127.0.0.1:8787`（那是 Surface 自己，不是家里电脑）  
 - 必须用**家里跑雷达那台**的 Tailscale IP  
 
-### 3.3 连不上时
+### 3.3 连不上时（先看代理，再诊断）
 
 - **先关翻墙/系统代理再试**：Surface 或办公室电脑上的 Clash / V2Ray / 系统代理，常会把去 `100.x.y.z` 的流量拐走，表现为 Tailscale 已连接但网页打不开；关掉代理或把 `100.64.0.0/10` 设直连后通常立刻恢复。  
-- `100.64` 和 `100.112` 开头都正常，同属 Tailscale 网段，前缀不同本身不是故障。  
+- **`100.64` 和 `100.112` 开头都正常**，都在 Tailscale 网段 `100.64.0.0/10` 里，前缀不同本身不会导致连不上。  
 - 家里：`start-all.bat` 两个黑窗口还在吗？本机 `http://127.0.0.1:8787` 能开吗？  
 - 两边 Tailscale 是否都 Connected、是否同一账号？  
 - 家里是否已运行过 `allow-firewall-8787.bat`？  
 - Surface 打开的是否是 `http://100.x.y.z:8787`，而不是 127.0.0.1？  
 - 双击家里电脑的 `show-access-url.bat`，按它打印的地址在 Surface 上试  
+
+仍不行时，在**家里电脑**双击 `diagnose-tailscale.bat`，看：
+
+1. 是否有 `0.0.0.0:8787` 在 LISTENING（只有 `127.0.0.1:8787` 则外机进不来，需重启最新 `start-all.bat`）  
+2. 防火墙规则是否存在  
+3. 本机 Tailscale IP 是多少  
+
+在 **Surface** 上打开 PowerShell，对**家里电脑**的 IP 测试：
+
+```bat
+ping -n 4 100.x.y.z
+```
+
+- **ping 都不通**：是 Tailscale/账号/网络问题，还没轮到雷达  
+  - 确认两边同一账号、都 Connected  
+  - 打开 https://login.tailscale.com/admin/machines 看两台是否在线、是否被禁用  
+- **ping 通但浏览器打不开**：再开 `http://100.x.y.z:8787`，并在家里重跑 `allow-firewall-8787.bat` / `diagnose-tailscale.bat` 后重启 `start-all.bat`  
+- Surface 上 **不要**用 `127.0.0.1`
 
 ### 3.4 日常怎么用
 
