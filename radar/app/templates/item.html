@@ -17,15 +17,24 @@
     <a href="#run">远程试跑</a>
   </nav>
 
+  {% set placeholder_intro = item.intro and ('尚未配置大模型' in item.intro or '【占位说明】' in item.intro or '调用大模型失败' in item.intro or '配置 OPENAI_API_KEY 后' in item.intro) %}
+  {% set placeholder_deep = item.deep_dive and (item.deep_dive.startswith('# 生成失败') or '当前进程没有读到可用的 API Key' in item.deep_dive or '配置 OpenAI 兼容接口后' in item.deep_dive) %}
+
   <section id="intro">
     <h2>深度介绍</h2>
-    {% if item.intro and '尚未配置大模型' not in item.intro %}
+    {% if item.intro and not placeholder_intro %}
       <div class="prose">{{ item.intro | replace('\n', '<br>') | safe }}</div>
       <form method="post" action="/items/{{ item.id }}/intro" style="margin-top:0.8rem">
         <button type="submit">重新生成深度介绍</button>
       </form>
     {% else %}
-      <p>默认按需生成：只有你点了按钮才会调用大模型，不会把扫描到的每条都拿去总结。</p>
+      <p>
+        {% if llm_enabled %}
+          这条还只有采集时的占位整理。大模型已接通，点下面按钮才会真正生成介绍（按需调用，省 token）。
+        {% else %}
+          默认按需生成。先配置 <code>radar/.env</code> 里的 API Key，并重启后再点生成。
+        {% endif %}
+      </p>
       {% if item.intro %}
         <div class="prose muted">{{ item.intro | replace('\n', '<br>') | safe }}</div>
       {% endif %}
@@ -37,8 +46,12 @@
 
   <section id="deep">
     <h2>全过程详解</h2>
-    {% if item.deep_dive and not item.deep_dive.startswith('# 生成失败') and '当前进程没有读到可用的 API Key' not in item.deep_dive and '配置 OpenAI 兼容接口后' not in item.deep_dive %}
+    {% if item.deep_dive and not placeholder_deep %}
+      <p class="muted">若文中出现「本节仅有摘要级信息」，通常是因为目前只抓到标题/摘要，不是系统坏了；要看细节可点上面的 arXiv / 项目主页。</p>
       <div class="prose">{{ item.deep_dive | replace('\n', '<br>') | safe }}</div>
+      <form method="post" action="/items/{{ item.id }}/deep-dive" style="margin-top:0.8rem">
+        <button type="submit">重新生成全过程讲解</button>
+      </form>
     {% else %}
       {% if item.deep_dive %}
         <div class="prose">{{ item.deep_dive | replace('\n', '<br>') | safe }}</div>
