@@ -14,9 +14,18 @@ TIER_LABEL = {
 }
 
 
-def load_feed(session: Session, *, kind: str | None = None, q: str | None = None, limit: int = 80) -> list[Item]:
+def load_feed(
+    session: Session,
+    *,
+    kind: str | None = None,
+    track: str | None = None,
+    q: str | None = None,
+    limit: int = 80,
+) -> list[Item]:
     stmt = select(Item).order_by(Item.score.desc(), Item.collected_at.desc())
-    if kind:
+    if track == "xray":
+        stmt = stmt.where(Item.kind.in_(("pro_paper", "vendor")))
+    elif kind:
         stmt = stmt.where(Item.kind == kind)
     if q:
         like = f"%{q.strip()}%"
