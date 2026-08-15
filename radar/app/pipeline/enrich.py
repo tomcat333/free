@@ -117,10 +117,10 @@ def _format_llm_error(exc: Exception) -> str:
 
 async def ensure_intro(session: Session, item: Item, *, force: bool = False) -> Item:
     """按需生成一句话简报 + 深度介绍。默认不在采集时自动烧 token。"""
-    has_real_intro = bool(item.intro) and "尚未配置大模型" not in item.intro
+    has_real_intro = bool(item.intro) and "尚未配置大模型" not in item.intro and "调用大模型失败" not in item.intro
     if has_real_intro and item.brief and not force:
         return item
-    if force or (item.intro and "尚未配置大模型" in item.intro):
+    if force or (item.intro and ("尚未配置大模型" in item.intro or "调用大模型失败" in item.intro)):
         item.intro = ""
     await enrich_items(session, [item], deep=False)
     session.refresh(item)
