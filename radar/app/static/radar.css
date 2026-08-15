@@ -71,6 +71,17 @@ main { padding: 2rem 6vw 4rem; }
   background: #0a0a08; border: 1px solid var(--line); padding: 0.8rem; overflow: auto;
   font-size: 0.78rem; color: #cfc6ad;
 }
+.free-actions { display: flex; flex-wrap: wrap; gap: 0.55rem; margin: 0.8rem 0 0.4rem; }
+button.secondary, a.chip {
+  display: inline-block; text-decoration: none; font: inherit; cursor: pointer;
+  background: transparent; color: var(--gold); border: 1px solid var(--gold);
+  padding: 0.45rem 0.75rem;
+}
+.prompt-box {
+  width: 100%; margin: 0.35rem 0 0.9rem; padding: 0.7rem;
+  background: #0a0a08; color: #cfc6ad; border: 1px solid var(--line);
+  font: 0.82rem/1.45 ui-monospace, Consolas, monospace; resize: vertical;
+}
 .foot { padding: 1rem 6vw 2.5rem; color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--line); }
 @media (max-width: 800px) {
   .status { grid-template-columns: 1fr; }
