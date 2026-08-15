@@ -26,6 +26,15 @@
    - 并打开浏览器 http://127.0.0.1:8787  
 4. **要停止**：关掉那两个黑窗口，或双击 `stop-all.bat`
 
+如果 worker 报 `SyntaxError: <<<<<<< HEAD`，说明本地文件还留着合并冲突标记。在仓库根目录执行：
+
+```bat
+git checkout master
+git pull origin master
+```
+
+或双击 `radar\fix-local.bat`，然后再 `start-all.bat`。
+
 也可以单独双击 `start-web.bat` / `start-worker.bat`。
 
 首页「深度解读」若显示「未接通 API Key」，说明 `.env` 没被读到或没重启；显示「已接通」后再点条目里的「生成深度介绍」。
