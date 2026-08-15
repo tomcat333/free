@@ -34,8 +34,9 @@
 
 1. `keep-awake-ac.bat` → 电源里确认接通电源不睡眠  
 2. `install-autostart.bat` → 登录 Windows 自动启动雷达  
-3. 电脑/手机都装 Tailscale，同一账号  
-4. 手机浏览器打开 `http://<电脑的Tailscale-IP>:8787`
+3. 电脑/手机/平板都装 Tailscale，同一账号；家里电脑再运行一次 `allow-firewall-8787.bat`  
+4. 其他设备浏览器打开 `http://<家里电脑的Tailscale-IP>:8787`（不要用 127.0.0.1）  
+5. 不确定地址时，在家里电脑双击 `show-access-url.bat`
 
 如果 worker 报 `SyntaxError: <<<<<<< HEAD`，说明本地文件还留着合并冲突标记。在仓库根目录执行：
 
