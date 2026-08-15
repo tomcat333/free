@@ -16,7 +16,7 @@ from app.db import get_session, init_db
 from app.dispatch import build_run_pack, dispatch_item
 from app.models import CollectorRun, Dispatch, Item
 from app.pipeline.briefing import TIER_LABEL, briefing_groups, load_feed, recent_window
-from app.pipeline.enrich import ensure_deep_dive
+from app.pipeline.enrich import ensure_deep_dive, ensure_intro
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 STATIC_DIR = Path(__file__).parent / "static"
@@ -149,6 +149,15 @@ def api_item(item_id: int, session: Session = Depends(db_dep)):
     return _item_dict(item, full=True)
 
 
+@app.post("/api/items/{item_id}/intro")
+async def api_intro(item_id: int, session: Session = Depends(db_dep)):
+    item = session.get(Item, item_id)
+    if not item:
+        raise HTTPException(404, "条目不存在")
+    item = await ensure_intro(session, item, force=True)
+    return {"id": item.id, "brief": item.brief, "intro": item.intro}
+
+
 @app.post("/api/items/{item_id}/deep-dive")
 async def api_deep_dive(item_id: int, session: Session = Depends(db_dep)):
     item = session.get(Item, item_id)
@@ -189,6 +198,15 @@ async def trigger_collect(request: Request):
     if "text/html" in accept and "application/json" not in accept:
         return RedirectResponse("/", status_code=303)
     return result
+
+
+@app.post("/items/{item_id}/intro")
+async def form_intro(item_id: int, session: Session = Depends(db_dep)):
+    item = session.get(Item, item_id)
+    if not item:
+        raise HTTPException(404, "条目不存在")
+    await ensure_intro(session, item, force=True)
+    return RedirectResponse(f"/items/{item_id}#intro", status_code=303)
 
 
 @app.post("/items/{item_id}/deep-dive")

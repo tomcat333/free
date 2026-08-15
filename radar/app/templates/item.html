@@ -19,7 +19,20 @@
 
   <section id="intro">
     <h2>深度介绍</h2>
-    <div class="prose">{{ (item.intro or '还没有深度介绍。点下面生成，或等采集轮次精加工。') | replace('\n', '<br>') | safe }}</div>
+    {% if item.intro and '尚未配置大模型' not in item.intro %}
+      <div class="prose">{{ item.intro | replace('\n', '<br>') | safe }}</div>
+      <form method="post" action="/items/{{ item.id }}/intro" style="margin-top:0.8rem">
+        <button type="submit">重新生成深度介绍</button>
+      </form>
+    {% else %}
+      <p>默认按需生成：只有你点了按钮才会调用大模型，不会把扫描到的每条都拿去总结。</p>
+      {% if item.intro %}
+        <div class="prose muted">{{ item.intro | replace('\n', '<br>') | safe }}</div>
+      {% endif %}
+      <form method="post" action="/items/{{ item.id }}/intro">
+        <button type="submit">{% if llm_enabled %}生成深度介绍{% else %}生成结构化介绍（未配 API Key）{% endif %}</button>
+      </form>
+    {% endif %}
   </section>
 
   <section id="deep">
@@ -27,9 +40,9 @@
     {% if item.deep_dive %}
       <div class="prose">{{ item.deep_dive | replace('\n', '<br>') | safe }}</div>
     {% else %}
-      <p>这一层按需生成，避免每条都烧 token。</p>
+      <p>这一层也是按需生成，避免每条都烧 token。</p>
       <form method="post" action="/items/{{ item.id }}/deep-dive">
-        <button type="submit">生成全过程讲解</button>
+        <button type="submit">{% if llm_enabled %}生成全过程讲解{% else %}生成大纲（未配 API Key）{% endif %}</button>
       </form>
     {% endif %}
   </section>
