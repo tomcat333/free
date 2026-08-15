@@ -27,13 +27,20 @@ BRIEF_PROMPT = """你是前沿科技情报编辑。根据材料写两层中文�
 {summary}
 """
 
-DEEP_PROMPT = """你是算法/系统讲解员。请用中文把下面这条前沿资讯讲透，输出 Markdown，包含：
-1. 问题背景：它要解决什么
-2. 全过程 / 方法步骤：尽量按流水线写清楚（数据、模型、训练、推理、评测）
-3. 关键创新点：和旧方法差在哪
-4. 怎么自己上手：仓库/论文怎么读、最小复现路径
-5. 风险与未知：别吹过头
-如果材料不足以写某节，就明确写「材料不足」。
+DEEP_PROMPT = """你是算法/系统讲解员。请直接输出 Markdown 正文，不要写开场白、不要自我介绍、不要解释你的写作原则。
+
+必须包含这些小节（用二级标题）：
+## 问题背景
+## 方法与流程
+## 关键创新点
+## 怎么上手
+## 局限与未知
+
+规则：
+- 只根据下面材料写；不要编造论文里没有的实验数字或实现细节。
+- 某一节如果材料不够，用一句话写「本节仅有摘要级信息，细节需看原文」，不要单独用「材料不足」当大标题吓唬读者。
+- 摘要里已有的内容要尽量讲清楚，不要整篇都说信息不够。
+
 标题: {title}
 类型: {kind}
 来源: {source}
@@ -117,14 +124,24 @@ def _format_llm_error(exc: Exception) -> str:
 
 async def ensure_intro(session: Session, item: Item, *, force: bool = False) -> Item:
     """按需生成一句话简报 + 深度介绍。默认不在采集时自动烧 token。"""
-    has_real_intro = bool(item.intro) and "尚未配置大模型" not in item.intro and "调用大模型失败" not in item.intro
+    has_real_intro = bool(item.intro) and not _is_placeholder_intro(item.intro)
     if has_real_intro and item.brief and not force:
         return item
-    if force or (item.intro and ("尚未配置大模型" in item.intro or "调用大模型失败" in item.intro)):
+    if force or _is_placeholder_intro(item.intro or ""):
         item.intro = ""
     await enrich_items(session, [item], deep=False)
     session.refresh(item)
     return item
+
+
+def _is_placeholder_intro(text: str) -> bool:
+    markers = (
+        "尚未配置大模型",
+        "【占位说明】",
+        "调用大模型失败",
+        "配置 OPENAI_API_KEY 后",
+    )
+    return any(m in text for m in markers)
 
 
 async def ensure_deep_dive(session: Session, item: Item) -> Item:
@@ -193,9 +210,8 @@ def _template_intro(item: Item) -> str:
     if extra:
         bits.append("采集侧信号：" + ", ".join(f"{k}={v}" for k, v in list(extra.items())[:8]))
     bits.append(
-        "尚未配置大模型，以上为结构化整理。"
-        "在 .env 里配置 OPENAI_API_KEY（也可用 DeepSeek / 硅基流动 / 智谱等兼容接口），"
-        "再点页面上的「生成深度介绍」；默认不会把扫描到的每条都拿去总结。"
+        "【占位说明】这是还没调用大模型时留下的结构化整理，不是最终介绍。"
+        "首页若已显示「已接通」，请点下面的「生成深度介绍」。"
     )
     return "\n\n".join(bits)
 
