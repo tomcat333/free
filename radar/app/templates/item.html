@@ -37,12 +37,16 @@
 
   <section id="deep">
     <h2>全过程详解</h2>
-    {% if item.deep_dive %}
+    {% if item.deep_dive and not item.deep_dive.startswith('# 生成失败') and '当前进程没有读到可用的 API Key' not in item.deep_dive and '配置 OpenAI 兼容接口后' not in item.deep_dive %}
       <div class="prose">{{ item.deep_dive | replace('\n', '<br>') | safe }}</div>
     {% else %}
-      <p>这一层也是按需生成，避免每条都烧 token。</p>
+      {% if item.deep_dive %}
+        <div class="prose">{{ item.deep_dive | replace('\n', '<br>') | safe }}</div>
+      {% else %}
+        <p>这一层也是按需生成，避免每条都烧 token。</p>
+      {% endif %}
       <form method="post" action="/items/{{ item.id }}/deep-dive">
-        <button type="submit">{% if llm_enabled %}生成全过程讲解{% else %}生成大纲（未配 API Key）{% endif %}</button>
+        <button type="submit">{% if llm_enabled %}{% if item.deep_dive %}重新生成全过程讲解{% else %}生成全过程讲解{% endif %}{% else %}生成大纲（未配 API Key）{% endif %}</button>
       </form>
     {% endif %}
   </section>

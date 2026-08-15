@@ -86,12 +86,33 @@ async def enrich_items(session: Session, items: list[Item], deep: bool = False) 
                 item.enriched_at = datetime.now(timezone.utc).replace(tzinfo=None)
                 done += 1
                 session.commit()
-            except Exception:
+            except Exception as exc:
                 log.exception("enrich failed for item %s", item.id)
-                if not item.intro:
-                    item.intro = _template_intro(item)
+                err = _format_llm_error(exc)
+                if not item.intro or "尚未配置大模型" in item.intro:
+                    item.intro = (
+                        f"调用大模型失败，没有生成介绍。\n\n"
+                        f"原因：{err}\n\n"
+                        f"请检查 radar/.env 里的 OPENAI_API_KEY / OPENAI_BASE_URL / OPENAI_MODEL，"
+                        f"改完后必须重新启动 start-all.bat。"
+                    )
+                if deep:
+                    item.deep_dive = (
+                        f"# 生成失败\n\n"
+                        f"已配置接口，但本次调用没有成功。\n\n"
+                        f"- 模型：`{settings.openai_model}`\n"
+                        f"- 地址：`{settings.openai_base_url}`\n"
+                        f"- 原因：{err}\n"
+                    )
                 session.commit()
     return done
+
+
+def _format_llm_error(exc: Exception) -> str:
+    if isinstance(exc, httpx.HTTPStatusError):
+        body = (exc.response.text or "")[:500]
+        return f"HTTP {exc.response.status_code}: {body}"
+    return f"{type(exc).__name__}: {exc}"
 
 
 async def ensure_intro(session: Session, item: Item, *, force: bool = False) -> Item:
@@ -107,8 +128,16 @@ async def ensure_intro(session: Session, item: Item, *, force: bool = False) -> 
 
 
 async def ensure_deep_dive(session: Session, item: Item) -> Item:
-    if item.deep_dive:
+    text = item.deep_dive or ""
+    is_placeholder = (
+        not text
+        or text.startswith("# 生成失败")
+        or "配置 OpenAI 兼容接口后" in text
+        or "当前进程没有读到可用的 API Key" in text
+    )
+    if not is_placeholder:
         return item
+    item.deep_dive = ""
     await enrich_items(session, [item], deep=True)
     session.refresh(item)
     return item
@@ -172,10 +201,16 @@ def _template_intro(item: Item) -> str:
 
 
 def _template_deep(item: Item) -> str:
+    found = settings.env_file_found or "（未找到 radar/.env）"
     return (
         f"# {item.title}\n\n"
         f"## 问题背景\n材料来自 {item.source}，类型 {item.kind}。\n\n"
         f"## 原文要点\n{item.raw_summary or '（无摘要）'}\n\n"
         f"## 怎么上手\n打开来源链接阅读，并视情况克隆仓库或下载论文 PDF。\n\n"
-        f"## 材料不足\n配置 OpenAI 兼容接口后，可生成逐步算法/系统讲解。\n"
+        f"## 材料不足\n"
+        f"当前进程没有读到可用的 API Key，所以只能给结构化大纲。\n\n"
+        f"- 配置文件：`{found}`\n"
+        f"- 请确认 `radar/.env` 里有 `OPENAI_API_KEY=...`（可用 DeepSeek 等兼容接口）\n"
+        f"- 改完后必须关掉黑窗口，再重新双击 `start-all.bat`\n"
+        f"- 首页「深度解读」应显示「已接通」，再点「生成全过程讲解」\n"
     )
