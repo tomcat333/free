@@ -11,6 +11,7 @@
   </p>
 
   <nav class="toc">
+    <a href="#free">免费解读</a>
     <a href="#intro">深度介绍</a>
     <a href="#deep">全过程</a>
     <a href="#sources">来源</a>
@@ -20,46 +21,73 @@
   {% set placeholder_intro = item.intro and ('尚未配置大模型' in item.intro or '【占位说明】' in item.intro or '调用大模型失败' in item.intro or '配置 OPENAI_API_KEY 后' in item.intro) %}
   {% set placeholder_deep = item.deep_dive and (item.deep_dive.startswith('# 生成失败') or '当前进程没有读到可用的 API Key' in item.deep_dive or '配置 OpenAI 兼容接口后' in item.deep_dive) %}
 
+  <section id="free">
+    <h2>免费解读（不烧 API token）</h2>
+    <p>
+      雷达负责发现和筛选；真正细读可以像你平时一样，丢给 Kimi / 豆包 / DeepSeek <strong>网页版</strong>（通常免费）。
+      下面会帮你备好提示词：先复制，再打开对应网站粘贴即可。
+    </p>
+
+    <div class="free-actions">
+      <button type="button" class="secondary" data-copy="prompt-deep">复制全过程提示词</button>
+      <button type="button" class="secondary" data-copy="prompt-intro">复制简介提示词</button>
+      {% for chat in bridge.chats %}
+      <a class="chip" href="{{ chat.url }}" target="_blank" rel="noreferrer">打开 {{ chat.label }}</a>
+      {% endfor %}
+      {% if bridge.pdf_url %}
+      <a class="chip" href="{{ bridge.pdf_url }}" target="_blank" rel="noreferrer">打开 PDF</a>
+      {% endif %}
+    </div>
+    <p class="muted" id="copy-hint">提示词复制后，到网页聊天里 Ctrl+V 粘贴。</p>
+
+    <label class="muted" for="prompt-deep">全过程提示词</label>
+    <textarea id="prompt-deep" class="prompt-box" readonly rows="8">{{ bridge.prompt_deep }}</textarea>
+    <label class="muted" for="prompt-intro">简介提示词</label>
+    <textarea id="prompt-intro" class="prompt-box" readonly rows="6">{{ bridge.prompt_intro }}</textarea>
+
+    <form method="post" action="/items/{{ item.id }}/free-tldr" style="margin-top:1rem">
+      <button type="submit">拉取 Semantic Scholar 免费 TLDR（论文可用，0 token）</button>
+    </form>
+    <p class="muted">{{ bridge.ollama_hint }}</p>
+  </section>
+
   <section id="intro">
-    <h2>深度介绍</h2>
+    <h2>深度介绍 {% if llm_enabled %}<span class="muted">（会消耗 API token）</span>{% endif %}</h2>
     {% if item.intro and not placeholder_intro %}
       <div class="prose">{{ item.intro | replace('\n', '<br>') | safe }}</div>
       <form method="post" action="/items/{{ item.id }}/intro" style="margin-top:0.8rem">
-        <button type="submit">重新生成深度介绍</button>
+        <button type="submit">用 API 重新生成深度介绍</button>
       </form>
     {% else %}
       <p>
-        {% if llm_enabled %}
-          这条还只有采集时的占位整理。大模型已接通，点下面按钮才会真正生成介绍（按需调用，省 token）。
-        {% else %}
-          默认按需生成。先配置 <code>radar/.env</code> 里的 API Key，并重启后再点生成。
-        {% endif %}
+        想省钱：优先用上面的「免费解读」。
+        {% if llm_enabled %}若仍要用已配置的 API，再点下面按钮。{% else %}未配置 API Key 时，也可以只生成结构化占位。{% endif %}
       </p>
       {% if item.intro %}
         <div class="prose muted">{{ item.intro | replace('\n', '<br>') | safe }}</div>
       {% endif %}
       <form method="post" action="/items/{{ item.id }}/intro">
-        <button type="submit">{% if llm_enabled %}生成深度介绍{% else %}生成结构化介绍（未配 API Key）{% endif %}</button>
+        <button type="submit">{% if llm_enabled %}用 API 生成深度介绍{% else %}生成结构化介绍（未配 API Key）{% endif %}</button>
       </form>
     {% endif %}
   </section>
 
   <section id="deep">
-    <h2>全过程详解</h2>
+    <h2>全过程详解 {% if llm_enabled %}<span class="muted">（会消耗 API token）</span>{% endif %}</h2>
     {% if item.deep_dive and not placeholder_deep %}
-      <p class="muted">若文中出现「本节仅有摘要级信息」，通常是因为目前只抓到标题/摘要，不是系统坏了；要看细节可点上面的 arXiv / 项目主页。</p>
+      <p class="muted">若文中出现「本节仅有摘要级信息」，通常是因为目前只抓到标题/摘要；细节可看 PDF，或把上面免费提示词丢给网页版模型。</p>
       <div class="prose">{{ item.deep_dive | replace('\n', '<br>') | safe }}</div>
       <form method="post" action="/items/{{ item.id }}/deep-dive" style="margin-top:0.8rem">
-        <button type="submit">重新生成全过程讲解</button>
+        <button type="submit">用 API 重新生成全过程讲解</button>
       </form>
     {% else %}
       {% if item.deep_dive %}
         <div class="prose">{{ item.deep_dive | replace('\n', '<br>') | safe }}</div>
       {% else %}
-        <p>这一层也是按需生成，避免每条都烧 token。</p>
+        <p>省钱路径：复制上面的全过程提示词 → 打开 Kimi/豆包/DeepSeek 网页版。API 生成仅在你明确需要时使用。</p>
       {% endif %}
       <form method="post" action="/items/{{ item.id }}/deep-dive">
-        <button type="submit">{% if llm_enabled %}{% if item.deep_dive %}重新生成全过程讲解{% else %}生成全过程讲解{% endif %}{% else %}生成大纲（未配 API Key）{% endif %}</button>
+        <button type="submit">{% if llm_enabled %}{% if item.deep_dive %}用 API 重新生成全过程讲解{% else %}用 API 生成全过程讲解{% endif %}{% else %}生成大纲（未配 API Key）{% endif %}</button>
       </form>
     {% endif %}
   </section>
@@ -92,4 +120,21 @@
     {% endfor %}
   </section>
 </article>
+<script>
+  document.querySelectorAll("[data-copy]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.getAttribute("data-copy");
+      const box = document.getElementById(id);
+      const hint = document.getElementById("copy-hint");
+      try {
+        await navigator.clipboard.writeText(box.value);
+        hint.textContent = "已复制。现在打开上面的免费网页版，粘贴即可。";
+      } catch (err) {
+        box.focus();
+        box.select();
+        hint.textContent = "自动复制失败，已帮你选中文本，请按 Ctrl+C。";
+      }
+    });
+  });
+</script>
 {% endblock %}

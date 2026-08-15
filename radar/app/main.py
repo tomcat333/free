@@ -14,6 +14,11 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.db import get_session, init_db
 from app.dispatch import build_run_pack, dispatch_item
+from app.free_bridge import (
+    fetch_semantic_scholar_tldr,
+    format_free_intro,
+    free_bridge_payload,
+)
 from app.models import CollectorRun, Dispatch, Item
 from app.pipeline.briefing import TIER_LABEL, briefing_groups, load_feed, recent_window
 from app.pipeline.enrich import ensure_deep_dive, ensure_intro
@@ -106,6 +111,7 @@ def item_page(request: Request, item_id: int, session: Session = Depends(db_dep)
             "sources": sources,
             "extra": extra,
             "dispatches": dispatches,
+            "bridge": free_bridge_payload(item),
             "llm_enabled": settings.llm_enabled,
             "llm_model": settings.openai_model if settings.llm_enabled else "",
             "env_file_found": settings.env_file_found,
@@ -155,6 +161,44 @@ def api_item(item_id: int, session: Session = Depends(db_dep)):
     if not item:
         raise HTTPException(404, "条目不存在")
     return _item_dict(item, full=True)
+
+
+@app.get("/api/items/{item_id}/free-bridge")
+def api_free_bridge(item_id: int, session: Session = Depends(db_dep)):
+    item = session.get(Item, item_id)
+    if not item:
+        raise HTTPException(404, "条目不存在")
+    return free_bridge_payload(item)
+
+
+@app.post("/api/items/{item_id}/free-tldr")
+async def api_free_tldr(item_id: int, session: Session = Depends(db_dep)):
+    item = session.get(Item, item_id)
+    if not item:
+        raise HTTPException(404, "条目不存在")
+    bundle = await fetch_semantic_scholar_tldr(item)
+    if not bundle:
+        raise HTTPException(404, "没有找到可用的免费公开摘要（多半不是 arXiv 论文，或上游暂无 TLDR）")
+    item.intro = format_free_intro(bundle)
+    if bundle.get("tldr") and (not item.brief or len(item.brief) < 20):
+        item.brief = bundle["tldr"][:220]
+    session.commit()
+    session.refresh(item)
+    return {"id": item.id, "brief": item.brief, "intro": item.intro, "source": "semantic_scholar"}
+
+
+@app.post("/items/{item_id}/free-tldr")
+async def form_free_tldr(item_id: int, session: Session = Depends(db_dep)):
+    item = session.get(Item, item_id)
+    if not item:
+        raise HTTPException(404, "条目不存在")
+    bundle = await fetch_semantic_scholar_tldr(item)
+    if bundle:
+        item.intro = format_free_intro(bundle)
+        if bundle.get("tldr") and (not item.brief or len(item.brief) < 20):
+            item.brief = bundle["tldr"][:220]
+        session.commit()
+    return RedirectResponse(f"/items/{item_id}#free", status_code=303)
 
 
 @app.post("/api/items/{item_id}/intro")
