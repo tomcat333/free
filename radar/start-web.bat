@@ -9,7 +9,9 @@ if not exist ".venv\Scripts\python.exe" (
 
 set "PYTHONPATH=%cd%"
 set "PORT=8787"
-echo [Frontier Radar] Web UI: http://127.0.0.1:%PORT%
+echo [Frontier Radar] Web UI
+echo   Local:     http://127.0.0.1:%PORT%
+echo   LAN/Tailscale: http://^<this-PC-IP^>:%PORT%
 if exist ".env" (
   echo [config] found .env
 ) else if exist ".env.txt" (
@@ -19,7 +21,8 @@ if exist ".env" (
 )
 echo Close this window to stop the web server.
 echo.
-".venv\Scripts\python.exe" -m uvicorn app.main:app --host 127.0.0.1 --port %PORT%
+REM 0.0.0.0 = allow phone via Tailscale / LAN; not only this PC browser
+".venv\Scripts\python.exe" -m uvicorn app.main:app --host 0.0.0.0 --port %PORT%
 echo.
 echo Web server stopped.
 pause
