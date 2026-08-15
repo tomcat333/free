@@ -86,4 +86,15 @@ button.secondary, a.chip {
 @media (max-width: 800px) {
   .status { grid-template-columns: 1fr; }
   .mast { flex-direction: column; align-items: stretch; }
+  main { padding: 1rem 4vw 3rem; }
+  .status h1 { font-size: 1.45rem; }
+  .cards { grid-template-columns: 1fr; }
+  .toc { flex-wrap: wrap; gap: 0.65rem; }
+  .free-actions { flex-direction: column; }
+  button, button.secondary, a.chip, .search button {
+    width: 100%; text-align: center; padding: 0.75rem 0.9rem; font-size: 1rem;
+  }
+  .prompt-box { font-size: 0.9rem; min-height: 8rem; }
+  .story h1 { font-size: 1.45rem; }
 }
+
