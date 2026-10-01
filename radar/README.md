@@ -2,6 +2,8 @@
 
 持续收集 AI / 算法前沿资讯，自动估重要性，做成可以往下钻的简报。
 
+> **工作交接**：背景、架构、已完成项、部署决策、排障经验与接手入口，见 **[HANDOVER.md](HANDOVER.md)**。
+
 这不是 RSS 阅读器。RSS 只是来源之一。真正在做的是：
 
 1. **不停采集**：arXiv（含 CD-SAXS / HRXRD 等专业检索）、GitHub、Hugging Face、Hacker News、Reddit、实验室博客，以及理学 / 科磊等厂商动态
